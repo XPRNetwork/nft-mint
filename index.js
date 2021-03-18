@@ -3,17 +3,18 @@ require('dotenv').config()
 const { JsonRpc, Api, JsSignatureProvider } = require('@proton/js')
 const fetch = require('node-fetch')
 
+// Constants
 const ENDPOINT = 'https://proton.eoscafeblock.com'
 const CREATOR = 'monsters'
 const CREATOR_PERMISSION = 'active'
 const COLLECTION_NAME = 'monsters'
 const SCHEMA_NAME = 'monsters'
-
-const rpc = new JsonRpc(ENDPOINT, { fetch })
-const api = new Api({
-    rpc,
-    signatureProvider: new JsSignatureProvider([process.env.PRIVATE_KEY])
-})
+const MARKET_FEE = 0.01
+const SCHEMA = {
+    series: "uint16",
+    image: "image",
+    name: "string"
+}
 
 // NOTE: template_id must be manually inputted after `createTemplates()` is called, check proton.bloks.io
 const templates = [
@@ -29,6 +30,13 @@ const templates = [
     { template_id: 10, max_supply: 1000, series: 1, name: 'Cerberus', image: 'QmejwojCLwjbNxqVNwBhyvKj5jUM4kGsm4tGM2U8CbniXy' },
 ]
 
+// RPC
+const rpc = new JsonRpc(ENDPOINT, { fetch })
+const api = new Api({
+    rpc,
+    signatureProvider: new JsSignatureProvider([process.env.PRIVATE_KEY])
+})
+
 const transact = async (actions) => {
     try {
         await api.transact({ actions }, {
@@ -38,6 +46,52 @@ const transact = async (actions) => {
     } catch (e) {
         console.log(e)
     }
+}
+
+const createCollection = async () => {
+    await transact([
+        {
+            "account": "atomicassets",
+            "name": "createcol",
+            "authorization": [{
+                "actor": CREATOR,
+                "permission": CREATOR_PERMISSION
+                }
+            ],
+            "data": {
+                "author": CREATOR,
+                "collection_name": COLLECTION_NAME,
+                "allow_notify": true,
+                "authorized_accounts": [CREATOR],
+                "notify_accounts": [],
+                "market_fee": MARKET_FEE,
+                "data": []
+            }
+        }
+    ])
+}
+
+const createSchema = async () => {
+    await transact([
+        {
+            "account": "atomicassets",
+            "name": "createschema",
+            "authorization": [{
+                "actor": CREATOR,
+                "permission": CREATOR_PERMISSION,
+              }
+            ],
+            "data": {
+              "authorized_creator": CREATOR,
+              "collection_name": CREATOR,
+              "schema_name": CREATOR,
+              "schema_format": Object.entries(SCHEMA).map(([key, type]) => ({
+                  name: key,
+                  type: type
+              }))
+            }
+        }
+    ])
 }
 
 const createTemplates = async () => {
@@ -58,11 +112,10 @@ const createTemplates = async () => {
                 "transferable": true,
                 "burnable": true,
                 "max_supply": template.max_supply,
-                "immutable_data": [
-                    {"key": "series", "value": ["uint16", template.series]},
-                    {"key": "image", "value": ["string", template.image]},
-                    {"key": "name", "value": ["string", template.name]}
-                ]
+                "immutable_data": Object.entries(SCHEMA).map(([key, type]) => ({
+                    key: key,
+                    value: [type, template[key]]
+                }))
               }
             }
         ])
@@ -71,7 +124,6 @@ const createTemplates = async () => {
 
 const mintAssets = async () => {
     const highToLowMint = templates.sort((t1, t2) => t2 - t1)
-
 
     for (let i = 0; i < highToLowMint[0].max_supply; i++) {
         for (const template of templates) {
@@ -103,5 +155,11 @@ const mintAssets = async () => {
     }
 }
 
-// createTemplates()
-// mintAssets()
+const main = async () => {
+    await createCollection()
+    await createSchema()
+    await createTemplates()
+    await mintAssets()
+}
+
+main()
