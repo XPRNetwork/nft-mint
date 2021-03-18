@@ -3,29 +3,30 @@ require('dotenv').config()
 const { JsonRpc, Api, JsSignatureProvider } = require('@proton/js')
 const fetch = require('node-fetch')
 
-const ENDPOINT = 'https://testnet.protonchain.com'
+const ENDPOINT = 'https://proton.eoscafeblock.com'
 const CREATOR = 'monsters'
+const CREATOR_PERMISSION = 'active'
 const COLLECTION_NAME = 'monsters'
 const SCHEMA_NAME = 'monsters'
 
 const rpc = new JsonRpc(ENDPOINT, { fetch })
-const api = new Api({ rpc, signatureProvider: new JsSignatureProvider([process.env.PRIVATE_KEY]) })
+const api = new Api({
+    rpc,
+    signatureProvider: new JsSignatureProvider([process.env.PRIVATE_KEY])
+})
 
+// NOTE: template_id must be manually inputted after `createTemplates()` is called, check proton.bloks.io
 const templates = [
-    { max_supply: 100, series: 1, name: 'Dullahan', image: 'QmT35anF2vLjjfgCQXBXfXqGgXXj4rJrsjcXWYLm9HDfWL' },
-    { max_supply: 200, series: 1, name: 'Minotaur', image: 'Qmd3fNhjZGqKrLjLKNrRue7WqfNErnqgovrVFmS6xCumY6' },
-    { max_supply: 300, series: 1, name: 'Jersey Devil', image: 'QmXM5JC5jhmKNZEfQRazAfEksWmN6YEUDizCWsoGAD1isk' },
-    { max_supply: 400, series: 1, name: 'Misthag', image: 'QmeMzdUpyjPtBpZYgBnxApWETh4Cuo3HavUL63RzAwRcqT' },
-    { max_supply: 500, series: 1, name: 'Draugr', image: 'QmTpSH94BkNJCf82R1WFdPo6NcaiCZJmUdxCgGM2ka2Eue' },
-    { max_supply: 600, series: 1, name: 'Cropsey', image: 'QmPfkthP29F3a4RauRSZnGuMy4QV7bKfS4fvdkUTvGL7Hi' },
-    { max_supply: 700, series: 1, name: 'Typhon', image: 'QmYKrwqVbZAAHjT2BMhzeuFboSybKU7tNGFNgVj15CBy3F' },
-    { max_supply: 800, series: 1, name: 'Ghoul', image: 'QmXniR5MRo7QXG3Eb64jDpz5jyLw14796aAH8A19koHmez' },
-    { max_supply: 900, series: 1, name: 'Wendigo', image: 'QmbaX33qayCBmVqY3xaEX951DgG4nK1osN2RLtetvUdgPi' },
-    { max_supply: 1000, series: 1, name: 'Cerberus', image: 'QmejwojCLwjbNxqVNwBhyvKj5jUM4kGsm4tGM2U8CbniXy' },
-]
-
-const toMints = [
-    { template_id: 1 }
+    { template_id: 1, max_supply: 100, series: 1, name: 'Dullahan', image: 'QmT35anF2vLjjfgCQXBXfXqGgXXj4rJrsjcXWYLm9HDfWL' },
+    { template_id: 2, max_supply: 200, series: 1, name: 'Minotaur', image: 'Qmd3fNhjZGqKrLjLKNrRue7WqfNErnqgovrVFmS6xCumY6' },
+    { template_id: 3, max_supply: 300, series: 1, name: 'Jersey Devil', image: 'QmXM5JC5jhmKNZEfQRazAfEksWmN6YEUDizCWsoGAD1isk' },
+    { template_id: 4, max_supply: 400, series: 1, name: 'Misthag', image: 'QmeMzdUpyjPtBpZYgBnxApWETh4Cuo3HavUL63RzAwRcqT' },
+    { template_id: 5, max_supply: 500, series: 1, name: 'Draugr', image: 'QmTpSH94BkNJCf82R1WFdPo6NcaiCZJmUdxCgGM2ka2Eue' },
+    { template_id: 6, max_supply: 600, series: 1, name: 'Cropsey', image: 'QmPfkthP29F3a4RauRSZnGuMy4QV7bKfS4fvdkUTvGL7Hi' },
+    { template_id: 7, max_supply: 700, series: 1, name: 'Typhon', image: 'QmYKrwqVbZAAHjT2BMhzeuFboSybKU7tNGFNgVj15CBy3F' },
+    { template_id: 8, max_supply: 800, series: 1, name: 'Ghoul', image: 'QmXniR5MRo7QXG3Eb64jDpz5jyLw14796aAH8A19koHmez' },
+    { template_id: 9, max_supply: 900, series: 1, name: 'Wendigo', image: 'QmbaX33qayCBmVqY3xaEX951DgG4nK1osN2RLtetvUdgPi' },
+    { template_id: 10, max_supply: 1000, series: 1, name: 'Cerberus', image: 'QmejwojCLwjbNxqVNwBhyvKj5jUM4kGsm4tGM2U8CbniXy' },
 ]
 
 const transact = async (actions) => {
@@ -47,7 +48,7 @@ const createTemplates = async () => {
               "name": "createtempl",
               "authorization": [{
                   "actor": CREATOR,
-                  "permission": "active"
+                  "permission": CREATOR_PERMISSION
                 }
               ],
               "data": {
@@ -68,27 +69,33 @@ const createTemplates = async () => {
     }
 }
 
-const main = async () => {
-    for (let i = template_start; i <= template_end; i++) {
-        for (let j = 0; j < assets_to_mint; j++) {
+const mintAssets = async () => {
+    const highToLowMint = templates.sort((t1, t2) => t2 - t1)
+
+
+    for (let i = 0; i < highToLowMint[0].max_supply; i++) {
+        for (const template of templates) {
+            if (i >= template.max_supply) {
+                continue;
+            }
+
             await transact([
                 {
                     "account": "atomicassets",
                     "name": "mintasset",
                     "authorization": [{
-                        "actor": "monsters",
-                        "permission": "mint"
-                    }
-                    ],
+                        "actor": CREATOR,
+                        "permission": CREATOR_PERMISSION
+                    }],
                     "data": {
-                    "authorized_minter": "monsters",
-                    "collection_name": "monsters",
-                    "schema_name": "monsters",
-                    "template_id": i,
-                    "new_asset_owner": "monsters",
-                    "immutable_data": [],
-                    "mutable_data": [],
-                    "tokens_to_back": []
+                        "authorized_minter": CREATOR,
+                        "collection_name": COLLECTION_NAME,
+                        "schema_name": SCHEMA_NAME,
+                        "template_id": template.template_id,
+                        "new_asset_owner": CREATOR,
+                        "immutable_data": [],
+                        "mutable_data": [],
+                        "tokens_to_back": []
                     }
                 }
             ])
@@ -96,4 +103,5 @@ const main = async () => {
     }
 }
 
-createTemplates()
+// createTemplates()
+// mintAssets()
