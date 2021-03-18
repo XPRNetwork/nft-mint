@@ -1,0 +1,16 @@
+{
+  "name": "mint",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Syed Jafri",
+  "license": "ISC",
+  "dependencies": {
+    "@proton/js": "^22.0.45",
+    "dotenv": "^8.2.0",
+    "node-fetch": "^2.6.1"
+  }
+}
