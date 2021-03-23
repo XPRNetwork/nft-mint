@@ -64,7 +64,7 @@ const createCollection = async () => {
                 "allow_notify": true,
                 "authorized_accounts": [CREATOR],
                 "notify_accounts": [],
-                "CREATOR_FEE": CREATOR_FEE,
+                "market_fee": CREATOR_FEE,
                 "data": []
             }
         }
