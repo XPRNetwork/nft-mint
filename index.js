@@ -9,7 +9,7 @@ const CREATOR = 'monsters'
 const CREATOR_PERMISSION = 'active'
 const COLLECTION_NAME = 'monsters'
 const SCHEMA_NAME = 'monsters'
-const MARKET_FEE = 0.01
+const CREATOR_FEE = 0.01
 const SCHEMA = {
     series: "uint16",
     image: "image",
@@ -64,7 +64,7 @@ const createCollection = async () => {
                 "allow_notify": true,
                 "authorized_accounts": [CREATOR],
                 "notify_accounts": [],
-                "market_fee": MARKET_FEE,
+                "CREATOR_FEE": CREATOR_FEE,
                 "data": []
             }
         }
