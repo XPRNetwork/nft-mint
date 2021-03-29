@@ -12,7 +12,7 @@ const SCHEMA_NAME = 'monsters'
 const CREATOR_FEE = 0.01
 const SCHEMA = {
     series: "uint16",
-    image: "image",
+    image: "string",
     name: "string"
 }
 
